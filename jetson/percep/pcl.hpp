@@ -2,6 +2,7 @@
 #pragma once
 
 #include "perception.hpp"
+#include "mapping.hpp"
 #include <pcl/common/common_headers.h>
 #include <float.h>
 
@@ -92,6 +93,8 @@ class PCL {
         #endif
         };
 
+    Mapping map;
+
     private:
 
         //Filters points with values beyond certain threshold
@@ -108,6 +111,9 @@ class PCL {
         
         //Finds the four corners of the clustered obstacles
         void FindInterestPoints(std::vector<pcl::PointIndices> &cluster_indices, std::vector<std::vector<int>> &interest_points);
+
+        //Inverse Sensor Model
+        void InverseSensorModel(Mapping &occupancyGrid);
         
         //Finds a clear path given the obstacle corners
         void FindClearPath(const std::vector<std::vector<int>> &interest_points);

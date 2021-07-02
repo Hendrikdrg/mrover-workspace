@@ -1,10 +1,6 @@
 #pragma once
 #include "perception.hpp"
-<<<<<<< HEAD
 #include "rapidjson/document.h"
-=======
-#include <fstream>
->>>>>>> wrote more code
 
 #if OBSTACLE_DETECTION
 	#include <pcl/common/common_headers.h>

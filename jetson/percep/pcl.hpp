@@ -91,9 +91,19 @@ class PCL {
             viewer -> close();
             viewer_original -> close();
         #endif
+<<<<<<< HEAD
         };
+=======
 
-    Mapping map;
+        Mapping map;
+    };
+
+    double bearing;
+    double distance;
+    bool detected;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr pt_cloud_ptr;
+    int cloudArea;
+>>>>>>> mapping changes
 
     private:
 

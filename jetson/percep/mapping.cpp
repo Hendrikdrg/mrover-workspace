@@ -3,9 +3,8 @@
 #include <cmath>
 #include <cassert>
 #include <fstream>
-#include "rover_msgs/Odometry.hpp"
 
-using namespace rover_msgs;
+#include "mapping.hpp"
 
 MappingMath::cos(double &angleInDegrees) {
     return radianToDegree(cos(degreeToRadian(angleInDegrees, 0)));
@@ -34,6 +33,9 @@ MapSegmentation::Quadrant MapSegmentation::getQuadrant(double &angleIn) {
         return QuadrantThree;
     }
     else if (angleIn >= 270.0 && angleIn < 360.0) {
+        return QuadrantFour;
+    }
+    else if (angleIn >= 0.0 && angleIn < 90.0) {
         return QuadrantFour;
     }
 }
@@ -101,12 +103,32 @@ void MapSegmentation::calculateQuadrantCorners(double &angleInDegrees, char &key
             else if(key == 'u' && i == 3) {
                 indexCorners[i] = (ceil(MAX_FILTER_LENGTH * MappingMath::cos(360.0 - angle));
             }
-            else if(key == 'u' && i == 2) { 
+            else if(key == 'u' && i == 2) {
                 indexCorners[i] = ((-1) * MAX_FILTER_LENGTH);
             }
             else {
                 indexCorners[i] = MAX_FILTER_LENGTH;
             }
+        }
+    }
+}
+
+
+void MapSegmentation::getFOV() {
+    int currentRoverPosition;
+    fovTracker.push_back(currentRoverPosition);
+    while (!fovTracker.empty()) {
+        fovTracker.push_back((currentRoverPosition + 1) - 1);
+        fovTracker.push_back((currentRoverPosition + 1) + 1);
+        fovTracker.push_back((currentRoverPosition + 1) - 0);
+        fovTracker.push_back((currentRoverPosition - 1) - 1);
+        fovTracker.push_back((currentRoverPosition - 1) + 0);
+        fovTracker.push_back((currentRoverPosition - 1) + 0);
+        fovTracker.push_back((currentRoverPosition + 0) - 1);
+        fovTracker.push_back((currentRoverPosition + 0) + 1);
+
+        while (fovTracker.size() != 1) {
+
         }
     }
 }
@@ -138,42 +160,45 @@ Mapping::Mapping() {
     roverXCoordsInOccupancyMap = 4999;
 }
 
+//hsv filter
+//morphology
+//convex hull of the contour
 void Mapping::updatePositionInOccupancyMap(Odometry &currentOdometry) {
-    double changeInDistanceFromPreviousPosition = 
-            estimateNoneuclid(currentOdometry, previousOdometry);
-        double changeInBearingFromPreviousPosition = 
-            calcBearing(currentOdometry, previousOdometry);
-        
-        while(changeInBearingFromPreviousPosition < 0) {
-            changeInBearingFromPreviousPosition += 360.0;
-        }
+    double changeInDistanceFromPreviousPosition =
+        estimateNoneuclid(currentOdometry, previousOdometry);
+    double changeInBearingFromPreviousPosition =
+        calcBearing(currentOdometry, previousOdometry);
 
-        //if the bearing is between 0 and 90
-        if(changeInBearingFromPreviousPosition =< 90.0) {
-            changeInPositionWidth = changeInEuclideanDistanceFromPreviousPosition * 
-                MappingMath::cos(90.0 - changeInBearingFromPreviousPosition);
-            changeInPositionHeight = changeInEuclideanDistanceFromPreviousPosition * 
-                MappingMath::sin(90.0 - changeInBearingFromPreviousPosition);
-        }
-        //if bearing is between 90 - 180 
-        else if(changeInBearingFromPreviousPosition > 90.0 && changeInBearingFromPreviousPosition =< 180.0) {
-            changeInPositionWidth = MappingMath::cos(changeInBearingFromPreviousPosition - 90.0);
-            changeInPositionHeight = MappingMath::sin(changeInBearingFromPreviousPosition - 90.0);
-        }
-        else if(changeInBearingFromPreviousPosition > 180.0 && changeInBearingFromPreviousPosition =< 270.0) {
-            changeInPositionWidth = MappingMath::cos(270.0 - changeInBearingFromPreviousPosition); 
-            changeInPositionHeight = MappingMath::sin(270.0 - changeInBearingFromPreviousPosition);               
-        }
-        else {
-            changeInPositionWidth = MappingMath::cos(changeInBearingFromPreviousPosition - 270.0);
-            changeInPositionHeight = MappingMath::sin(hangeInBearingFromPreviousPosition - 270.0);
-        }
+    while(changeInBearingFromPreviousPosition < 0) {
+        changeInBearingFromPreviousPosition += 360.0;
+    }
 
-        roverXCoordsInOccupancyMap += ceil(changeInPositionWidth/CELL_DISTANCE);
-        roverYCoordsInOccupancyMap += ceil(changeInPositionHeight/CELL_DISTANCE);
-        
-        //then update odometry
-        previousOdometry = currentOdometry;
+    //if the bearing is between 0 and 90
+    if(changeInBearingFromPreviousPosition =< 90.0) {
+        changeInPositionWidth = changeInEuclideanDistanceFromPreviousPosition *
+            MappingMath::cos(90.0 - changeInBearingFromPreviousPosition);
+        changeInPositionHeight = changeInEuclideanDistanceFromPreviousPosition *
+            MappingMath::sin(90.0 - changeInBearingFromPreviousPosition);
+    }
+    //if bearing is between 90 - 180
+    else if(changeInBearingFromPreviousPosition > 90.0 && changeInBearingFromPreviousPosition =< 180.0) {
+        changeInPositionWidth = MappingMath::cos(changeInBearingFromPreviousPosition - 90.0);
+        changeInPositionHeight = MappingMath::sin(changeInBearingFromPreviousPosition - 90.0);
+    }
+    else if(changeInBearingFromPreviousPosition > 180.0 && changeInBearingFromPreviousPosition =< 270.0) {
+        changeInPositionWidth = MappingMath::cos(270.0 - changeInBearingFromPreviousPosition);
+        changeInPositionHeight = MappingMath::sin(270.0 - changeInBearingFromPreviousPosition);
+    }
+    else {
+        changeInPositionWidth = MappingMath::cos(changeInBearingFromPreviousPosition - 270.0);
+        changeInPositionHeight = MappingMath::sin(hangeInBearingFromPreviousPosition - 270.0);
+    }
+
+    roverXCoordsInOccupancyMap += ceil(changeInPositionWidth/CELL_DISTANCE);
+    roverYCoordsInOccupancyMap += ceil(changeInPositionHeight/CELL_DISTANCE);
+
+    //then update odometry
+    previousOdometry = currentOdometry;
 }
 
 void Mapping::updatePositionWithTXT() {
@@ -181,7 +206,7 @@ void Mapping::updatePositionWithTXT() {
     if (odom.is_open()) {
         double lat, latMin, lon, lonMin;
         while (std::getline(odom, lat)) {
-            
+            continue;
         }
     }
 }
@@ -254,7 +279,7 @@ void Mapping::updateOccupancyValues(size_t xIndex, size_t yIndex, bool &occupied
         map[xIndex][yIndex] = map[xIndex][yIndex] + (LOG_ODDS_OCCUPIED/LOG_ODDS_UNOCCUPIED);
     }
     else {
-        map[xIndex][yIndex] = map[xIndex][yIndex] + (LOG_ODDS_UNOCCUPIED/LOG_ODDS_OCCUPIED); 
+        map[xIndex][yIndex] = map[xIndex][yIndex] + (LOG_ODDS_UNOCCUPIED/LOG_ODDS_OCCUPIED);
     }
 }
 

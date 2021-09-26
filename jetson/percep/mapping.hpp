@@ -2,6 +2,7 @@
 #define PERCEP_MAPPING
 
 #include <vector>
+#include <deque>
 #include "rover_msgs/Odometry.hpp"
 #include "mapping.hpp"
 
@@ -21,7 +22,7 @@ class OccupancyMap {
 private:
     //Vector of vectors that stores the log odds of occupacy for each cell as a float.
     std::vector<std::vector<float> > occupancyMap;
-    
+
 public:
     //Default Constructor for OccupancyMap Class, resizes the vector of vectors to the default map height and width.
     OccupancyMap();
@@ -38,6 +39,7 @@ private:
     /* [quadrant] -> rowStart, colStart, rowEnd, colEnd... This vector can have either 8 or 12 elements depending on how
     many quadrants  the total FOV would take up */
     std::vector<int> indexCorners;
+    std::deque<int> fovTracker;
     Quadrant headingQuadrant, upperFOVQuadrant, lowerFOVQuadrant;
 
     //Given an angle, this function determines what Quadrant a cell is in
@@ -60,6 +62,8 @@ private:
 
     //calculates the segmentation for each quadrant and fills the indexCorners vector
     void fillIndexCorners();
+
+    void getFOV();
 public:
     //Default Constructor for MapSegmentation Class.
     MapSegmentation(double &headingAngle);
@@ -89,7 +93,7 @@ private:
     void updatePositionInOccupancyMap(Odometry &currentOdometry);
 
     void updatePositionWithTXT();
-    
+
     void updateOrientation (double &orientationAngle);
 
     void getMapArea();
@@ -106,7 +110,7 @@ public:
 
 
 class MappingMath {
-public: 
+public:
     //custom math function for mapping
     //returns angle in degrees
     double cos(double &angleInRadians);

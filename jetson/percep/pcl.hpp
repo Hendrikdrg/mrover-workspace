@@ -63,6 +63,7 @@ class PCL {
         cloudArea = PT_CLOUD_WIDTH*PT_CLOUD_HEIGHT;
         #endif
 
+        Mapping map;
     };
 
     double bearing;
@@ -70,8 +71,6 @@ class PCL {
     bool detected;
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr pt_cloud_ptr;
     int cloudArea;
-
-    Mapping map;
 
     private:
 

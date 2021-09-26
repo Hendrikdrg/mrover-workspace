@@ -368,7 +368,7 @@ void Camera::Impl::dataCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &p_pcl_point
 #endif
 
 Camera::Camera() : impl_{new Camera::Impl}, rgb_foldername{""},
-                   depth_foldername{""}, pcl_foldername{""}, 
+                   depth_foldername{""}, pcl_foldername{""} {}
                    //lcm_foldername{""} {}
 
 Camera::~Camera() {

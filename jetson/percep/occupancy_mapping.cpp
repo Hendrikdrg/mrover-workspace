@@ -1,73 +1,44 @@
-#include <iostream>
-#include <fstream>
 #include <vector>
-#include <stack>
-#include <cmath>
+#include <queue>
 
-#include <opencv2/opencv.hpp>
+#include "utilities.cpp"
 #include "occupancy_mapping.hpp"
 
-OccupancyMap::OccupancyMap() {
+OccupancyMap::OccupancyMap(const Odometry &initialOdom) {
     occupancyMap = occupancyMap(DEFAULT_OCCUPANCY_MAP_HEIGHT, std::vector(DEFAULT_OCCUPANCY_MAP_WIDTH, 0.5));
     occupancyMapIteration = occupancyMapIteration(DEFAULT_OCCUPANCY_MAP_HEIGHT, std::vector(DEFAULT_OCCUPANCY_MAP_WIDTH, 0));
 
     //initialize rover's position in the center
-    roverXPos = (DEFAULT_OCCUPANCY_MAP_WIDTH/2) - 1;
-    roverYPos = (DEFAULT_OCCUPANCY_MAP_HEIGHT/2) - 1;
+    roverRowIndex = (DEFAULT_OCCUPANCY_MAP_WIDTH/2) - 1;
+    roverColIndex = (DEFAULT_OCCUPANCY_MAP_HEIGHT/2) - 1;
+
+    //initialize roverXPos and roverYPos
+    roverXPos = 0.0;
+    roverYPos = 0.0;
+
+    //initalize Current Odometry Value
+    currOdom = initialOdom;
 }
 
-OccupancyMap::OccupancyMap(int height, int width) {
-    //occupancyMap = occupancyMap(height, std::vector(width, 0.5));
-    occupancyMap = vector<vector<float> > occupancyMap(height, std::vector(width, 0.5));
-    occupancyMapIteration = occupancyMapIteration(height, std::vector(width, 0));
-
-    //initialize rover's position in the center
-    roverXPos = (width/2) - 1;
-    roverYPos = (height/2) - 1;
+//Loads obstacle data in the vector representing the 100 cell x 100 cell region surrounding the rover
+void loadObtacles(std::vector<std::vector<int> >& roverFrame /*vector of Obstacle Structs*/) {
+    //right now, just assume that there are no obstacles.
+    //TODO: Create an interface between the obstacle data and write code to load obstacles into roverFrame vector
+    return;
 }
 
-void OccupancyMap::OccupancyMapViewer() {
-    //We want to view a K x K region of the map in the image, where K << N
-/*    //We want to view a K x K region of the map in the image, where K << N
-    int desiredViewWidthCells = 100;
-    int desiredViewStartR = roverXPos;
-    int desiredViewStartC = roverYPos;
-
-    //The image we will display, the dimensions can be arbitrary so long as its square
-    int desiredViewWidthPx = 800:
-    cv::Mat view(cv::Size(desiredViewWidthPx, desiredViewWidthPx));
-
-    int pxWidthPerViewCell = desiredViewWidthPx/desiredViewWidthCells;
-
-    for(int y = 0; y < desiredViewWidthPx; y++) {
-        for(int x = 0; x < desiredViewWidthPx; x++) {
-            view.at<float>(x, y) = map[desiredViewStartC + x/pxWidthPerViewCell][desiredViewStartR + y/pxWidthPerViewCell];
-        }
+//Changes the log odd value in the specificed cell
+void OccupancyMap::updateOccupancyValues(std::size_t& xIndex, std::size_t& yIndex, bool occupied) {
+    if (occupied) {
+        occupancyMap[xIndex][yIndex] = occupancyMap[xIndex][yIndex] + (LOG_ODDS_OCCUPIED/LOG_ODDS_UNOCCUPIED);
     }
-    cv::imshow("Occupancy Map", view); */
-}
-
-void getOdomData() {
-    std::ifstream odom;
-    odom.open("odom.txt");
-    while (!odom.eof) {
-        Odometry temp;
-        int currImageTime;
-        odom >> temp.latitude_deg >> temp.latitude_min >> temp.longitude_deg >> temp.longitude_min;
-        odom >> temp.bearing_deg >> temp.speed >> currImageTime;
-
-        odom_data.push_back(temp);
-        imageTimeData.push_back(currImageTime);
+    else {
+        occupancyMap[xIndex][yIndex] = occupancyMap[xIndex][yIndex] + (LOG_ODDS_UNOCCUPIED/LOG_ODDS_OCCUPIED);
     }
 }
 
-void updateRoverPosition() {
-    double changeInDistance = estimateNoneuclid(currentOdometry, previousOdometry);
-    double changeInBearing = calcBearing(currentOdometry, previousOdometry);
-
-    while (changeInBearing < 0) {
-        changeInBearing += 360.0;
-    }
+//Calls an OpenCV viewer to view a greyscalled 100 cell x 100 cell region of the occupancy map centered at the rover
+void viewer() {
+    //TODO: Develop this OpenCV viewer code
+    return;
 }
-
-

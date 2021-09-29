@@ -16,8 +16,8 @@ class compareLine {
 public:
     int xIntercept;
     double slope;
-    
-    compareLine(double angle_in, int xInt_in) : xIntercept{xInt_in}, 
+
+    compareLine(double angle_in, int xInt_in) : xIntercept{xInt_in},
                         slope{tan(angle_in*PI/180)} {
                             if(slope != 0) {
                                 slope = 1/slope;
@@ -26,13 +26,13 @@ public:
 
     //Returns 1 if point is right of line, 0 if on, -1 if left of line
     int operator()(int x, int y) {
-        
+
         //Make sure don't divide by 0
         double xc = xIntercept; //x calculated
         if(slope != 0) {
             xc = y/slope+xIntercept; //Find x value on line with same y value as input point
         }
-            
+
         //Point is right of the line
         if(x > xc) {
             return 1;
@@ -44,7 +44,7 @@ public:
         //Point is left of the line
         else {
             return -1;
-        } 
+        }
     }
 };
 
@@ -73,7 +73,7 @@ class PCL {
         int CLUSTER_TOLERANCE;
         int MIN_CLUSTER_SIZE;
         int MAX_CLUSTER_SIZE;
-        
+
         //member variables
         double leftBearing;
         double rightBearing;
@@ -87,38 +87,26 @@ class PCL {
 
         //Destructor for PCL
         ~PCL() {
-        #if OBSTACLE_DETECTION && PERCEPTION_DEBUG 
+        #if OBSTACLE_DETECTION && PERCEPTION_DEBUG
             viewer -> close();
             viewer_original -> close();
         #endif
-<<<<<<< HEAD
         };
-=======
-
-        Mapping map;
-    };
-
-    double bearing;
-    double distance;
-    bool detected;
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr pt_cloud_ptr;
-    int cloudArea;
->>>>>>> mapping changes
 
     private:
 
         //Filters points with values beyond certain threshold
         void PassThroughFilter(const std::string axis, const double upperLimit);
-        
+
         //Clusters nearby points to reduce total number of points
         void DownsampleVoxelFilter();
-        
+
         //Finds the ground plane
         void RANSACSegmentation(string type);
-        
+
         //Clusters nearby points into large obstacles
         void CPUEuclidianClusterExtraction(std::vector<pcl::PointIndices> &cluster_indices);
-        
+
         //Finds the four corners of the clustered obstacles
         void FindInterestPoints(std::vector<pcl::PointIndices> &cluster_indices, std::vector<std::vector<int>> &interest_points);
 
@@ -127,14 +115,14 @@ class PCL {
 
         //findObstacleConers helper function, returns the angle from the x axis to the z value
         double findObstacleCornersHelper(float &x, float &z, double &heading);
-        
+
         //Finds a clear path given the obstacle corners
         void FindClearPath(const std::vector<std::vector<int>> &interest_points);
 
         //Determines whether the input path is obstructed
         bool CheckPath(const std::vector<std::vector<int>> &interest_points,
                std::vector<int> &obstacles, compareLine leftLine, compareLine rightLine);
-        
+
         /**
         \brief Determines angle off center a clear path can be found
         \param direction: given 0 finds left clear path given 1 find right clear path
@@ -146,13 +134,13 @@ class PCL {
         //Initialized the Occupancy Grid
         void initializeOccupancyGrid();
 
-        //Main function that runs the above 
+        //Main function that runs the above
         void pcl_obstacle_detection();
 
         //Updates point cloud in the visualizer
         //Note: if bool is_original is true, we are using the original viewer
         void updateViewer(bool is_original);
-        
+
         //Creates a point cloud visualizer
         shared_ptr<pcl::visualization::PCLVisualizer> createRGBVisualizer();
 

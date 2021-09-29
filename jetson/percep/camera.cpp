@@ -1,5 +1,7 @@
 #include "camera.hpp"
 #include "perception.hpp"
+#include "rover_msgs/Odometry.hpp"
+
 
 #if OBSTACLE_DETECTION
     #include <pcl/common/common_headers.h>
@@ -26,14 +28,14 @@ public:
 
 	cv::Mat image();
 	cv::Mat depth();
-    
+
     //constants
     int THRESHOLD_CONFIDENCE;
 
     #if OBSTACLE_DETECTION
     void dataCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &p_pcl_point_cloud);
     #endif
-  
+
 private:
 	sl::RuntimeParameters runtime_params_;
 	sl::Resolution image_size_;
@@ -55,13 +57,13 @@ Camera::Impl::Impl(const rapidjson::Document &config) : THRESHOLD_CONFIDENCE(con
 	// TODO change this below?
 
 	assert(this->zed_.open() == sl::ERROR_CODE::SUCCESS);
-  
+
     //Parameters for Positional Tracking
     init_params.coordinate_system = sl::COORDINATE_SYSTEM::RIGHT_HANDED_Y_UP; // Use a right-handed Y-up coordinate system
     this->zed_.setCameraSettings(sl::VIDEO_SETTINGS::BRIGHTNESS, 1);
 
 	this->runtime_params_.confidence_threshold = THRESHOLD_CONFIDENCE;
-	
+
     #if PERCEPTION_DEBUG
         std::cout<<"ZED init success\n";
     #endif
@@ -113,12 +115,12 @@ Camera::Impl::~Impl() {
 #if OBSTACLE_DETECTION
 void Camera::Impl::dataCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr & p_pcl_point_cloud) {
     //Might need an overloaded assignment operator
-  
+
     //Grab ZED Depth Image
     sl::Resolution cloud_res(p_pcl_point_cloud->width, p_pcl_point_cloud->height);
     sl::Mat data_cloud;
     this->zed_.retrieveMeasure(data_cloud, sl::MEASURE::XYZRGBA, sl::MEM::CPU, cloud_res);
-  
+
     //Populate Point Cloud
     float *p_data_cloud = data_cloud.getPtr<float>();
     int index = 0;
@@ -187,7 +189,7 @@ Camera::Impl::~Impl() {
 }
 
 Camera::Impl::Impl(const rapidjson::Document &config) {
-  
+
     std::cout<<"Please input the folder path (there should be a rgb and depth existing in this folder): ";
     std::cin>>path;
     #if AR_DETECTION
@@ -199,23 +201,23 @@ Camera::Impl::Impl(const rapidjson::Document &config) {
         return;
     }
 
-    #endif  
+    #endif
 
     #if OBSTACLE_DETECTION
     pcd_path = path + "/pcl";
     pcd_dir = opendir(pcd_path.c_str() );
     if(NULL==pcd_dir) {
-        std::cerr<<"Input folder not exist\n";   
+        std::cerr<<"Input folder not exist\n";
         return;
   }
   #endif
-  
+
 
     // get the vector of image names, jpg/png for rgb files, .exr for depth files
     // we only read the rgb folder, and assume that the depth folder's images have the same name
     struct dirent *dp = NULL;
     #if AR_DETECTION
-  
+
     std::unordered_set<std::string> img_tails({".exr", ".jpg"}); // for rgb
     #if PERCEPTION_DEBUG
         std::cout<<"Read image names\n";
@@ -249,19 +251,19 @@ Camera::Impl::Impl(const rapidjson::Document &config) {
 #if PERCEPTION_DEBUG
     std::cout<<"Read PCL image names\n";
 #endif
-  
+
 do{
     if ((dp = readdir(pcd_dir)) != NULL) {
         std::string file_name(dp->d_name);
         #if PERCEPTION_DEBUG
             std::cout<<"file_name is "<<file_name<<std::endl;
         #endif
-      
+
         // the lengh of the tail str is at least 4
         if (file_name.size() < 5) continue;
 
         pcd_names.push_back(file_name);
-      
+
     }
 
 } while (dp != NULL);
@@ -271,7 +273,7 @@ do{
         std::cout<<"Read .pcd image names complete\n";
     #endif
     idx_curr_pcd_img = 0;
-    
+
 #endif
 }
 
@@ -291,7 +293,7 @@ bool Camera::Impl::grab() {
     idx_curr_pcd_img++;
     if (idx_curr_pcd_img >= pcd_names.size()-2) {
         std::cout<<"Ran out of images\n";
-        end = false;  
+        end = false;
     }
     #endif
     if(!end){
@@ -369,20 +371,20 @@ void Camera::record_ar_finish() {
 //Reads the point data cloud p_pcl_point_cloud
 #if OBSTACLE_DETECTION
 void Camera::Impl::dataCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &p_pcl_point_cloud){
- 
+
  //Read in image names
  std::string pcd_name = pcd_names[idx_curr_pcd_img];
  std::string full_path = pcd_path + std::string("/") + pcd_name;
-  //Load in the file  
-  if (pcl::io::loadPCDFile<pcl::PointXYZRGB> (full_path, *p_pcl_point_cloud) == -1){ //* load the file 
-    PCL_ERROR ("Couldn't read file test_pcd.pcd \n"); 
+  //Load in the file
+  if (pcl::io::loadPCDFile<pcl::PointXYZRGB> (full_path, *p_pcl_point_cloud) == -1){ //* load the file
+    PCL_ERROR ("Couldn't read file test_pcd.pcd \n");
   }
 }
 #endif
 
 #endif
 
-Camera::Camera(const rapidjson::Document &config) : 
+Camera::Camera(const rapidjson::Document &config) :
     impl_{new Camera::Impl(config)}, rgb_foldername{""}, depth_foldername{""}, pcl_foldername{""} , mRoverConfig( config ),
             FRAME_WRITE_INTERVAL{mRoverConfig["camera"]["frame_write_interval"].GetInt()} {}
 
@@ -421,9 +423,11 @@ void Camera::disk_record_init() {
     string mkdir_depth =  std::string("mkdir -p ") + depth_foldername;
     pcl_foldername = DEFAULT_ONLINE_DATA_FOLDER "pcl/";
     string mkdir_pcl = std::string("mkdir -p ") + pcl_foldername;
+    lcm_foldername = DEFAULT_ONLINE_DATA_FOLDER "lcm/";
+    string mkdir_lcm = std::string("mkdir -p ") + lcm_foldername;
 
     //creates new folder in the system
-    if (-1 == system(mkdir_pcl.c_str()) || -1 == system( mkdir_rgb.c_str()) || -1 == system(mkdir_depth.c_str())) 
+    if (-1 == system(mkdir_pcl.c_str()) || -1 == system( mkdir_rgb.c_str()) || -1 == system(mkdir_depth.c_str()))
     {
         exit(1);
     }
@@ -431,7 +435,7 @@ void Camera::disk_record_init() {
 
 //writes the Mat to a file
 
-//Writes point cloud data to data folder specified in build tag 
+//Writes point cloud data to data folder specified in build tag
 void pcl_write(const cv::String &filename, pcl::PointCloud<pcl::PointXYZRGB>::Ptr &p_pcl_point_cloud){
     #if PERCEPTION_DEBUG
         std::cout << "name of path is: " << filename << endl;
@@ -451,6 +455,16 @@ void Camera::write_curr_frame_to_disk(cv::Mat rgb, cv::Mat depth, pcl::PointClou
     pcl_write(pcl_foldername + fileName + std::string(".pcd"), p_pcl_point_cloud);
     cv::imwrite(rgb_foldername +  fileName + std::string(".jpg"), rgb );
     cv::imwrite(depth_foldername +  fileName + std::string(".exr"), depth );
+    cv::imwrite(lcm_foldername + fileName + std::string(".txt"), lcm)
+
+    ofstream output;
+    Odometry in;
+    output.open(lcm_foldername + fileName);
+    output << in.latitude_deg << endl;
+    output << in.latitude_min << endl;
+    output << in.longitude_deg << endl;
+    output << in.longitude_min << endl;
+    output << in.bearing_deg << endl;
 }
 
 #endif

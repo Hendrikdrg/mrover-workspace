@@ -5,7 +5,7 @@
 #if OBSTACLE_DETECTION
 
     //Constructor
-    PCL::PCL(const rapidjson::Document &mRoverConfig) : 
+    PCL::PCL(const rapidjson::Document &mRoverConfig) :
 
         //Populate Constants from Config File
         MAX_FIELD_OF_VIEW_ANGLE{mRoverConfig["pt_cloud"]["max_field_of_view_angle"].GetInt()},
@@ -23,7 +23,7 @@
         CLUSTER_TOLERANCE{mRoverConfig["pt_cloud"]["euclidean_cluster"]["cluster_tolerance"].GetInt()},
         MIN_CLUSTER_SIZE{mRoverConfig["pt_cloud"]["euclidean_cluster"]["min_cluster_size"].GetInt()},
         MAX_CLUSTER_SIZE{mRoverConfig["pt_cloud"]["euclidean_cluster"]["max_cluster_size"].GetInt()},
-        
+
         //Other Values
         leftBearing{0}, rightBearing{0}, distance{0}, detected{false},
         pt_cloud_ptr{new pcl::PointCloud<pcl::PointXYZRGB>} {
@@ -191,7 +191,7 @@ void PCL::FindInterestPoints(std::vector<pcl::PointIndices> &cluster_indices,
     for (int i = 0; i < (int)cluster_indices.size(); ++i)
     {
         std::vector<int>* curr_cluster = &interest_points[i];
-        
+
         //Initialize interest points
         std::fill(curr_cluster->begin(), curr_cluster->end(), cluster_indices[i].indices[0]);
 
@@ -199,7 +199,7 @@ void PCL::FindInterestPoints(std::vector<pcl::PointIndices> &cluster_indices,
         for (auto index : cluster_indices[i].indices)
         {
             auto curr_point = pt_cloud_ptr->points[index];
-            
+
             if(curr_point.x < pt_cloud_ptr->points[curr_cluster->at(0)].x){
                 curr_cluster->at(0) = index;
             }
@@ -238,8 +238,8 @@ void PCL::FindInterestPoints(std::vector<pcl::PointIndices> &cluster_indices,
                 //Creates a new interest point and sets it equal to the index of the leftmost point.
                 curr_cluster->push_back(curr_cluster->at(0));
             }
-            
-            //Using the x value of the current point, calculate the percentile that the current point would fall under, 
+
+            //Using the x value of the current point, calculate the percentile that the current point would fall under,
             //and then compare that x value to the one of the point that is currently representing that percentile.
             for (auto index : cluster_indices[i].indices) {
                 auto curr_point = pt_cloud_ptr->points[index];
@@ -247,7 +247,7 @@ void PCL::FindInterestPoints(std::vector<pcl::PointIndices> &cluster_indices,
                     //If roverWidths = 40 and if your x value falls between leftmost + 0.025 * obstacle width and leftmost + 0.05 * obstacle width,
                     //then the value of i would be 1 which represents the index of increment map the we want to check.
                     int j = ((double)(std::abs(curr_point.x - pt_cloud_ptr->points[curr_cluster->at(0)].x)/width)/((double) 1/roverWidths));
-                    //If the x value of the current point is greater than the value representing that percentile, 
+                    //If the x value of the current point is greater than the value representing that percentile,
                     //we set the value represnting the percentile equal to the x value of the current point.
                     if(increments[j] < curr_point.x) {
                         increments[j] = curr_point.x;
@@ -256,7 +256,7 @@ void PCL::FindInterestPoints(std::vector<pcl::PointIndices> &cluster_indices,
                 }
             }
         }
-        
+
         #if PERCEPTION_DEBUG
             for(auto interest_point : *curr_cluster)
             {
@@ -354,7 +354,7 @@ void PCL::FindClearPath(const std::vector<std::vector<int>> &interest_points) {
             std::cout << "CENTER PATH IS CLEAR!!!" << std::endl;
       #endif
     }
-    
+
     else {
 
         //Values that store the distances of the last obstacle from a given CheckPath. Center value gets its distance from previous loop of CheckPath
@@ -365,7 +365,7 @@ void PCL::FindClearPath(const std::vector<std::vector<int>> &interest_points) {
 
         //Find clear left path, set left bearing
         leftBearing = getAngleOffCenter(10, 0, interest_points, obstacles);
-        leftDistance = distance; 
+        leftDistance = distance;
 
         //Reset global variables
         obstacles = {0, 0};
@@ -394,18 +394,18 @@ bool PCL::CheckPath(const std::vector<std::vector<int>> &interest_points,
         pcl::ScopeTime t("Check Path");
     #endif
 
-    bool end = true; 
+    bool end = true;
     double previousDistance = -1;
 
     //if there are no interest points, the distance from the last obstacle should be -1
     distance = previousDistance;
-    
+
     //Iterate through interest points
     for(auto cluster : interest_points) {
         double sizeOfCluster = 0;
         double currentDistance = 0;
         for (auto index : cluster) {
-            //Check if the obstacle interest point is to the right of the left projected path of the rover 
+            //Check if the obstacle interest point is to the right of the left projected path of the rover
             //and to the left of the right projected path of the rover
             if(leftLine(pt_cloud_ptr->points[index].x, pt_cloud_ptr->points[index].z) >= 0 &&
                 rightLine(pt_cloud_ptr->points[index].x, pt_cloud_ptr->points[index].z) <= 0) {
@@ -434,7 +434,7 @@ bool PCL::CheckPath(const std::vector<std::vector<int>> &interest_points,
 
                 //adds distance from a point in a cluster to currentDistance, and keeps track of the cluster size
                 currentDistance += pt_cloud_ptr->points[index].z;
-                sizeOfCluster++; 
+                sizeOfCluster++;
             }
         }
         //to find the distance from an obstacle detected, add up all the z values from a given cluster of points
@@ -538,16 +538,7 @@ void PCL::pcl_obstacle_detection() {
     CPUEuclidianClusterExtraction(cluster_indices);
     std::vector<std::vector<int>> interest_points(cluster_indices.size(), vector<int> (6));
     FindInterestPoints(cluster_indices, interest_points);
-<<<<<<< HEAD
-    FindClearPath(interest_points); 
-=======
-    bearing = FindClearPath(interest_points, viewer); 
-
-    //Map
-    double headingAngle = map.getHeadingAngle(); //temporary
-    std::vector<int> obstacles = findObstacleCorners(interest_points, headingAngle);
-    map.updateOccupancyGrid(obstacles);
->>>>>>> wrote more code
+    FindClearPath(interest_points);
 }
 
 

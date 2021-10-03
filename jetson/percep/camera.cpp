@@ -384,9 +384,15 @@ void Camera::Impl::dataCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &p_pcl_point
 
 #endif
 
+<<<<<<< HEAD
 Camera::Camera(const rapidjson::Document &config) :
     impl_{new Camera::Impl(config)}, rgb_foldername{""}, depth_foldername{""}, pcl_foldername{""} , mRoverConfig( config ),
             FRAME_WRITE_INTERVAL{mRoverConfig["camera"]["frame_write_interval"].GetInt()} {}
+=======
+Camera::Camera() : impl_{new Camera::Impl}, rgb_foldername{""},
+                   depth_foldername{""}, pcl_foldername{""} {}
+                   //lcm_foldername{""} {}
+>>>>>>> 9665bc3d59782973a42bcddcaa4cc142dd7fc2a7
 
 Camera::~Camera() {
 	delete this->impl_;

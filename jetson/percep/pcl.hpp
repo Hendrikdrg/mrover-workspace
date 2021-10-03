@@ -115,7 +115,6 @@ class PCL {
 
         //findObstacleConers helper function, returns the angle from the x axis to the z value
         double findObstacleCornersHelper(float &x, float &z, double &heading);
-
         //Finds a clear path given the obstacle corners
         void FindClearPath(const std::vector<std::vector<int>> &interest_points);
 

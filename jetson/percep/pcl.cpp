@@ -305,6 +305,43 @@ std::vector<int> PCL::findObstacleCorners(std::vector<std::vector<int>> &interes
     }
 }
 
+double PCL::findObstacleCornersHelper(float &x, float &z, double &heading) {
+    if (x >= 0.0) {
+        double theta = asin(x/z);
+        return (heading + theta);
+    }
+    if (x < 0.0) {
+        double theta = asin((-1.0 * x)/z);
+        return heading = theta;
+    }
+}
+
+std::vector<int> PCL::findObstacleCorners(std::vector<std::vector<int>> &interest_points, double &headingAngle) {
+    std::vector<int> obstacleCorners;
+    for (int i = 0; i < (int) interest_points.size(); ++i) {
+        auto leftmost = pt_cloud_ptr->points[interest_points[i][0]];
+        auto rightmost = pt_cloud_ptr->points[interest_points[i][1]];
+        auto closest = pt_cloud_ptr->points[interest_points[i][4]];
+        auto furthest = pt_cloud_ptr->points[interest_points[i][5]];
+
+        //row start
+        double leftmostAngle = findObstacleCornersHelper(leftmost.x, leftmost.z, headingAngle);
+        obstacleCorners.push_back(ceil(leftmost.z * sin(leftmostAngle)));
+
+        //col start
+        double closestAngle = findObstacleCornersHelper(closest.x, closest.z, headingAngle);
+        obstacleCorners.push_back(ceil(closest.z * cos(closestAngle)));
+
+        //row end
+        double rightmostAngle = findObstacleCornersHelper(rightmost.x, rightmost.z, headingAngle);
+        obstacleCorners.push_back(ceil(rightmost.z * sin(rightmostAngle)));
+
+        //col end
+        double furthestAngle = findObstacleCornersHelper(furthest.x, furthest.z, headingAngle);
+        obstacleCorners.push_back(ceil(furthest.z * cos(furthestAngle)));
+    }
+}
+
 /* --- Get Angle Off Center--- */
 //This function finds the angle off center the
 //line that passes through both these points is
@@ -538,7 +575,12 @@ void PCL::pcl_obstacle_detection() {
     CPUEuclidianClusterExtraction(cluster_indices);
     std::vector<std::vector<int>> interest_points(cluster_indices.size(), vector<int> (6));
     FindInterestPoints(cluster_indices, interest_points);
-    FindClearPath(interest_points);
+    bearing = FindClearPath(interest_points, viewer);
+
+    //Map
+    double headingAngle = map.getHeadingAngle(); //temporary
+    std::vector<int> obstacles = findObstacleCorners(interest_points, headingAngle);
+    map.updateOccupancyGrid(obstacles);
 }
 
 

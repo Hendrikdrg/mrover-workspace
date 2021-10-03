@@ -1,6 +1,10 @@
 #pragma once
 #include "perception.hpp"
+<<<<<<< HEAD
 #include "rapidjson/document.h"
+=======
+#include <fstream>
+>>>>>>> 9665bc3d59782973a42bcddcaa4cc142dd7fc2a7
 
 #if OBSTACLE_DETECTION
 	#include <pcl/common/common_headers.h>
@@ -13,6 +17,11 @@ private:
 	std::string rgb_foldername;
 	std::string depth_foldername;
 	std::string pcl_foldername;
+<<<<<<< HEAD
+=======
+	//std::string lcm_foldername;
+
+>>>>>>> 9665bc3d59782973a42bcddcaa4cc142dd7fc2a7
 	cv::VideoWriter vidWrite;
 
     //reference to config file

@@ -25,6 +25,11 @@ struct Odometry {
     double speed;
 };
 
+struct CellIndex {
+    std::size_t colIndex;
+    std::size_t rowIndex;
+};
+
 class OccupancyMap {
     private:
         //2D vector that stores the log odds of occupacy for each cell as a float.
@@ -40,6 +45,8 @@ class OccupancyMap {
         //Current Odomerty data of the rover
         Odometry currOdomData;
 
+        double upperFOV, lowerFOV;
+
     private:
         //Loads obstacle data in the vector representing the 100 cell x 100 cell region surrounding the rover
         //TODO: make the viewing distance a constant (100 x 100)
@@ -51,6 +58,9 @@ class OccupancyMap {
         //Calls an OpenCV viewer to view a greyscalled 100 cell x 100 cell region of the occupancy map centered at the rover
         //TODO: Develop this OpenCV viewer function definition
         void viewer();
+
+        //Search surrounding Cell and updates their occupancy
+        void searchCells(std::vector<std::vector<int> >& roverFrame, std::queue<CellIndex>& sreach, CellIndex& current);
 
     public:
         //Contructor with Initial odometry data

@@ -92,9 +92,9 @@ class OccupancyMap {
 
         void setLogOdds(int x, int y, CellOdds logOdds);
 
-        void decreaseCellOdds(int x, int y, OccupancyGrid& map);
+        void decreaseCellOdds(int x, int y, OccupancyMap& map);
 
-        void increaseCellOdds(int x, int y, OccupancyGrid& map);
+        void increaseCellOdds(int x, int y, OccupancyMap& map);
 
 
 

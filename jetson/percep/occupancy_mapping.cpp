@@ -60,12 +60,14 @@ void loadObtacles(std::vector<std::vector<int> >& roverFrame /*vector of Obstacl
                 if(adjacentCell is not in q already){//missing
                     submap.x = adjacentCell.colIndex; //dependent on the submap initialisation
                     submap.y = adjacentCell.rowIndex;
+                    submap[x][y] = logOdds[adjacentCell.colIndex][adjacentCell.rowIndex]
                     q.push(adjacentCell);
 
                 }
 
             }
         
+    }
     }
 
     for(i=0;i<sizeof(obstacles)-1, i++){
@@ -78,16 +80,30 @@ void loadObtacles(std::vector<std::vector<int> >& roverFrame /*vector of Obstacl
             }
             a.x = a.x + 1;
         }
-
-        //decrease all other cell odds missing.
-
     }
+    //Decrease cell odds of all other cells that are not occupied
+    for(i=0; i <= submap.size()-1;i++){
+        for(j=0; j <= submap.[0].size()-1;j++){
+            if(logOdds(i,j) < 0){
+                decreaseCellOdds(i,j, submap);
+            }
+        }
+    }
+
+    for(i=0; i <= submap.size()-1;i++){
+        for(j=0; j <= submap.[0].size()-1;j++){
+
+            
+        }
+    }
+
     }
     
     return;
 }
 
 //Changes the log odd value in the specificed cell
+/*
 void OccupancyMap::updateOccupancyValues(std::size_t& xIndex, std::size_t& yIndex, bool occupied) {
     if (occupied) {
         occupancyMap[xIndex][yIndex] = occupancyMap[xIndex][yIndex] + (LOG_ODDS_OCCUPIED/LOG_ODDS_UNOCCUPIED);
@@ -95,7 +111,7 @@ void OccupancyMap::updateOccupancyValues(std::size_t& xIndex, std::size_t& yInde
     else {
         occupancyMap[xIndex][yIndex] = occupancyMap[xIndex][yIndex] + (LOG_ODDS_UNOCCUPIED/LOG_ODDS_OCCUPIED);
     }
-}
+}*/
 
 //Calls an OpenCV viewer to view a greyscalled 100 cell x 100 cell region of the occupancy map centered at the rover
 void viewer() {
@@ -127,7 +143,7 @@ void searchCells(std::vector<std::vector<int> >& roverFrame, std::queue<CellInde
             if (roverFrame[adjacentCell.rowIndex][adjacentCell.colIndex] != 1) {
                 roverFrame[adjacentCell.rowIndex][adjacentCell.colIndex] = 1;
                 search.push(adjacentCell);
-        }
+            }
         }
     }
 
@@ -179,8 +195,8 @@ void updateRoverPosition(const Odometry& newOdomData) {
 
 bool OccupancyGrid::isCellInGrid(int x, int y) const
 { 
-bool xCoordIsValid = (x >= 0) && (x < width_);
-    bool yCoordIsValid = (y >= 0) && (y < height_);
+    bool xCoordIsValid = (x >= 0) && (x < DEFAULT_OCCUPANCY_MAP_WIDTH);
+    bool yCoordIsValid = (y >= 0) && (y < DEFAULT_OCCUPANCY_MAP_HEIGHT);
     return xCoordIsValid && yCoordIsValid;
 }
 
@@ -188,14 +204,14 @@ void OccupancyGrid::setLogOdds(int x, int y, CellOdds value)
 {
     if(isCellInGrid(x, y))
     {
-        operator()(x, y) = value;
+        OccupancyMap[x][y] = value;
     }
 }
 CellOdds OccupancyGrid::logOdds(int x, int y) const
 {
     if(isCellInGrid(x, y))
     {
-        return operator()(x, y);
+        return OccupancyMap[x][y];
     }
     
     return 0;
@@ -203,20 +219,19 @@ CellOdds OccupancyGrid::logOdds(int x, int y) const
 
 void OccupancyMap::decreaseCellOdds(int x, int y, OccupancyMap& map){
     if(std::numeric_limits<CellOdds>::min() < map(x, y) -kMissOdds_){
-    map(x,y) -= kMissOdds_;
-    //std::cout<<kMissOdds_<<std::endl;
+    map[x][y] -= kMissOdds_;
     }
     else{
-        map(x,y) = std::numeric_limits<CellOdds>::min();
+        map[x][y] = std::numeric_limits<CellOdds>::min();
     }
 
 void OccupancyMap::increaseCellOdds(int x, int y, OccupancyMap& map){
     
     if(std::numeric_limits<CellOdds>::max() - map(x,y) > kHitOdds_){
-    map(x,y) += kHitOdds_;
+    map[x][y] += kHitOdds_;
     }
     else{
-        map(x,y) = std::numeric_limits<CellOdds>::max();
+        map[x][y] = std::numeric_limits<CellOdds>::max(); //might be []
     }
 
 

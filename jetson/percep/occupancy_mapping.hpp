@@ -13,6 +13,12 @@ const double ZED_FOV = 90.0; //deg
 const double CELL_DISTANCE = 0.4; //0.4 meters
 const int MAX_FILTER_LENGTH = 7; //7 meters
 
+//(changes)
+typedef int8_t CellOdds;   ///< Type used to represent the data in a cell
+const int8_t kHitOdds_;
+const int8_t kMissOdds_;
+
+
 //Struct used when reading in odometery data from a text file
 //TODO: Write function to read in data from odom.txt and record.txt
 //TODO: Write function to read in odom data from LCM synced with image data from LCM
@@ -62,6 +68,12 @@ class OccupancyMap {
         //Search surrounding Cell and updates their occupancy
         void searchCells(std::vector<std::vector<int> >& roverFrame, std::queue<CellIndex>& sreach, CellIndex& current);
 
+        void initialise();
+
+        
+
+
+
     public:
         //Contructor with Initial odometry data
         OccupancyMap(const Odometry& initialOdom);
@@ -71,6 +83,19 @@ class OccupancyMap {
 
         //Iterated through all cell in the FOV and updated log odds of occupancy
         void updateOccupancyMap();
+        //(changes)
+        bool isCellInGrid(int x, int y) const;
+
+        CellOdds logOdds(int x, int y) const;
+
+        void setLogOdds(int x, int y, CellOdds logOdds);
+
+        void decreaseCellOdds(int x, int y, OccupancyGrid& map);
+
+        void increaseCellOdds(int x, int y, OccupancyGrid& map);
+
+
+
 };
 
 #endif

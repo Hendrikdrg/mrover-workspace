@@ -1,9 +1,10 @@
 #include <vector>
 #include <queue>
-
+#include <numeric>
 #include "percep_utilities.hpp"
 #include "occupancy_mapping.hpp"
 
+//Do cmd and f and type "changes". Everything I have changed you can find there
 // Coverts the input degree (and optional minute) to radians.
 double degreeToRadian(const double degree, const double minute) {
     return (PI/180) * (degree + minute/60);
@@ -34,6 +35,55 @@ OccupancyMap::OccupancyMap(const Odometry &initialOdom) {
 void loadObtacles(std::vector<std::vector<int> >& roverFrame /*vector of Obstacle Structs*/) {
     //right now, just assume that there are no obstacles.
     //TODO: Create an interface between the obstacle data and write code to load obstacles into roverFrame vector
+
+    CellIndex adjacentCell;
+    vector<bool> v;
+    queue<int> q;
+    queue<int> visited;
+    OccupancyMap submap; //create a proper submap
+
+    q.push(robotCell);
+    v[robotCell] = true;
+    
+    while (!q.empty()) //stop when it build a 100x100 map
+    {
+        int current = q.front();
+        q.pop(); 
+        
+
+        const int xDeltas[8] = {1, 1, 1, 0, 0, -1, -1, -1};
+        const int yDeltas[8] = {0, 1, -1, -1, 1, 0 , -1, 1 };
+        for(int i=0; i<8; i++){
+            if(isCellInGrid(map.x + xDeltas[i], map.y + yDeltas[i])){
+                adjacentCell.colIndex = map.colIndex + xDeltas[i]; //get the cells from the map
+                adjacentCell.rowIndex = map.rowIndex + yDeltas[i];
+                if(adjacentCell is not in q already){//missing
+                    submap.x = adjacentCell.colIndex; //dependent on the submap initialisation
+                    submap.y = adjacentCell.rowIndex;
+                    q.push(adjacentCell);
+
+                }
+
+            }
+        
+    }
+
+    for(i=0;i<sizeof(obstacles)-1, i++){
+        //increase cell odds of all four nodes
+
+        while(a.x != b.x + 1){ //increase the cell odds of all cells within the obstacle
+            while(a.y != c.y - 1){
+            increaseCellOdds(a.x, a.y, submap);
+            a.y = a.y -1;
+            }
+            a.x = a.x + 1;
+        }
+
+        //decrease all other cell odds missing.
+
+    }
+    }
+    
     return;
 }
 
@@ -58,96 +108,33 @@ void getFOVBounds() {
     if (upperFOV >= 360.0) {
         upperFOV = upperFOV - 360.0;
     }
-
     lowerFOV = heading - (DEFAULT_FOV/2.0);
-    if (upperFOV < 0.0) {
-        upperFOV = upperFOV + 360.0;
+    if (lowerFOV < 0.0) {
+        lowerFOV = lowerFOV + 360.0;
     }
 }
 
 //Search surrounding Cell and updates their occupancy
 void searchCells(std::vector<std::vector<int> >& roverFrame, std::queue<CellIndex>& sreach, CellIndex& current) {
-    //Check the eight cells arround the current cell
-    CellIndex temp;
-    temp.colIndex = current.colIndex + 1;
-    temp.rowIndex = current.rowIndex + 0;
-    float angle = tan(estimateNoneuclid(temp.rowIndex, roverYPos)/estimateNoneuclid(temp.colIndex, roverXPos));
-    if (angle < upperFOV && angle > lowerFOV) {
-        if (roverFrame[temp.rowIndex][temp.colIndex] != 1) {
-            roverFrame[temp.rowIndex][temp.colIndex] = 1;
-            search.push(temp);
+    CellIndex adjacentCell;
+    const int xDeltas[8] = {1, 1, 1, 0, 0, -1, -1, -1};
+    const int yDeltas[8] = {0, 1, -1, -1, 1, 0 , -1, 1 };
+    for(int i=0; i<8; i++){
+        adjacentCell.colIndex = current.colIndex + xDeltas[i];
+        adjacentCell.rowIndex = current.rowIndex + yDeltas[i];
+        float angle = tan(estimateNoneuclid(adjacentCell.rowIndex, roverYPos)/estimateNoneuclid(adjacentCell.colIndex, roverXPos));
+        if (angle < upperFOV && angle > lowerFOV) {
+            if (roverFrame[adjacentCell.rowIndex][adjacentCell.colIndex] != 1) {
+                roverFrame[adjacentCell.rowIndex][adjacentCell.colIndex] = 1;
+                search.push(adjacentCell);
+        }
         }
     }
 
-    temp.colIndex = current.colIndex + 1;
-    temp.rowIndex = current.rowIndex + 1;
-    angle = tan(estimateNoneuclid(temp.rowIndex, roverYPos)/estimateNoneuclid(temp.colIndex, roverXPos));
-    if (angle < upperFOV && angle > lowerFOV) {
-        if (roverFrame[temp.rowIndex][temp.colIndex] != 1) {
-            roverFrame[temp.rowIndex][temp.colIndex] = 1;
-            search.push(temp);
-        }
-    }
 
-    temp.colIndex = current.colIndex + 0;
-    temp.rowIndex = current.rowIndex + 1;
-    angle = tan(estimateNoneuclid(temp.rowIndex, roverYPos)/estimateNoneuclid(temp.colIndex, roverXPos));
-    if (angle < upperFOV && angle > lowerFOV) {
-        if (roverFrame[temp.rowIndex][temp.colIndex] != 1) {
-            roverFrame[temp.rowIndex][temp.colIndex] = 1;
-            search.push(temp);
-        }
     }
-
-    temp.colIndex = current.colIndex - 1;
-    temp.rowIndex = current.rowIndex + 0;
-    angle = tan(estimateNoneuclid(temp.rowIndex, roverYPos)/estimateNoneuclid(temp.colIndex, roverXPos));
-    if (angle < upperFOV && angle > lowerFOV) {
-        if (roverFrame[temp.rowIndex][temp.colIndex] != 1) {
-            roverFrame[temp.rowIndex][temp.colIndex] = 1;
-            search.push(temp);
-        }
-    }
-
-    temp.colIndex = current.colIndex - 1;
-    temp.rowIndex = current.rowIndex - 1;
-    angle = tan(estimateNoneuclid(temp.rowIndex, roverYPos)/estimateNoneuclid(temp.colIndex, roverXPos));
-    if (angle < upperFOV && angle > lowerFOV) {
-        if (roverFrame[temp.rowIndex][temp.colIndex] != 1) {
-            roverFrame[temp.rowIndex][temp.colIndex] = 1;
-            search.push(temp);
-        }
-    }
-
-    temp.colIndex = current.colIndex + 0;
-    temp.rowIndex = current.rowIndex - 1;
-    angle = tan(estimateNoneuclid(temp.rowIndex, roverYPos)/estimateNoneuclid(temp.colIndex, roverXPos));
-    if (angle < upperFOV && angle > lowerFOV) {
-        if (roverFrame[temp.rowIndex][temp.colIndex] != 1) {
-            roverFrame[temp.rowIndex][temp.colIndex] = 1;
-            search.push(temp);
-        }
-    }
-
-    temp.colIndex = current.colIndex - 1;
-    temp.rowIndex = current.rowIndex + 1;
-    angle = tan(estimateNoneuclid(temp.rowIndex, roverYPos)/estimateNoneuclid(temp.colIndex, roverXPos));
-    if (angle < upperFOV && angle > lowerFOV) {
-        if (roverFrame[temp.rowIndex][temp.colIndex] != 1) {
-            roverFrame[temp.rowIndex][temp.colIndex] = 1;
-            search.push(temp);
-        }
-    }
-
-    temp.colIndex = current.colIndex + 1;
-    temp.rowIndex = current.rowIndex - 1;
-    angle = tan(estimateNoneuclid(temp.rowIndex, roverYPos)/estimateNoneuclid(temp.colIndex, roverXPos));
-    if (angle < upperFOV && angle > lowerFOV) {
-        if (roverFrame[temp.rowIndex][temp.colIndex] != 1) {
-            roverFrame[temp.rowIndex][temp.colIndex] = 1;
-            search.push(temp);
-        }
-    }
+    
+    
 
 }
 
@@ -189,6 +176,55 @@ void updateRoverPosition(const Odometry& newOdomData) {
     //then update odometry
     currOdometry = newOdomData;
 }
+
+bool OccupancyGrid::isCellInGrid(int x, int y) const
+{ 
+bool xCoordIsValid = (x >= 0) && (x < width_);
+    bool yCoordIsValid = (y >= 0) && (y < height_);
+    return xCoordIsValid && yCoordIsValid;
+}
+
+void OccupancyGrid::setLogOdds(int x, int y, CellOdds value)
+{
+    if(isCellInGrid(x, y))
+    {
+        operator()(x, y) = value;
+    }
+}
+CellOdds OccupancyGrid::logOdds(int x, int y) const
+{
+    if(isCellInGrid(x, y))
+    {
+        return operator()(x, y);
+    }
+    
+    return 0;
+}
+
+void OccupancyMap::decreaseCellOdds(int x, int y, OccupancyMap& map){
+    if(std::numeric_limits<CellOdds>::min() < map(x, y) -kMissOdds_){
+    map(x,y) -= kMissOdds_;
+    //std::cout<<kMissOdds_<<std::endl;
+    }
+    else{
+        map(x,y) = std::numeric_limits<CellOdds>::min();
+    }
+
+void OccupancyMap::increaseCellOdds(int x, int y, OccupancyMap& map){
+    
+    if(std::numeric_limits<CellOdds>::max() - map(x,y) > kHitOdds_){
+    map(x,y) += kHitOdds_;
+    }
+    else{
+        map(x,y) = std::numeric_limits<CellOdds>::max();
+    }
+
+
+}
+
+
+
+
 
 //Iterated through all cell in the FOV and updated log odds of occupancy
 void updateOccupancyMap();  {

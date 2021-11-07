@@ -31,9 +31,11 @@ struct Odometry {
     double speed;
 };
 
-struct CellIndex {
+struct Cell {
     std::size_t colIndex;
     std::size_t rowIndex;
+    std::
+
 };
 
 class OccupancyMap {

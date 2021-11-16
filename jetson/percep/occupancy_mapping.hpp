@@ -41,7 +41,7 @@ struct Cell {
 class OccupancyMap {
     private:
         //2D vector that stores the log odds of occupacy for each cell as a float.
-        std::vector<std::vector<float> > occupancyMap;
+        std::vector<std::vector<CellOdds> > occupancyMap;
 
         //Current cell the rover is located in would be occupancyMap[roverRowIndex][roverColIndex].
         int roverRowIndex, roverColIndex;
@@ -89,6 +89,8 @@ class OccupancyMap {
         bool isCellInGrid(int x, int y) const;
 
         CellOdds logOdds(int x, int y) const;
+
+        //CellOdds& operator()(int x, int y)       { return occupancyMap[x][y]; }
 
         void setLogOdds(int x, int y, CellOdds logOdds);
 

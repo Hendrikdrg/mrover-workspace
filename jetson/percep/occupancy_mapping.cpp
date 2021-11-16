@@ -60,7 +60,7 @@ void loadObtacles(std::vector<std::vector<int> >& roverFrame /*vector of Obstacl
                 if(adjacentCell is not in q already){//missing
                     submap.x = adjacentCell.colIndex; //dependent on the submap initialisation
                     submap.y = adjacentCell.rowIndex;
-                    submap[x][y] = logOdds[adjacentCell.colIndex][adjacentCell.rowIndex]
+                    submap[x][y] = logOdds[adjacentCell.colIndex][adjacentCell.rowIndex];
                     q.push(adjacentCell);
 
                 }
